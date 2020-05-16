@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/materialize.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/canvas.css">
+    <script src="./js/materialize.min.js" charset="utf-8"></script>
+    <title>Sketch</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="deleteItem" class="modal">
+       <div class="modal-content">
+         <h4>Delete?</h4>
+       </div>
+       <div class="modal-footer">
+         <button id="confirmDelete" class="modal-close waves-effect waves-green btn red white-text">Yes</button>
+         <button class="modal-close waves-effect waves-green btn green white-text">No</button>
+       </div>
+     </div>
+
+      <div class="row">
+        <div class="col s12">
+          <div class="card">
+            <div class="card-content grey lighten-4">
+              <div class="input-field inline col s1">
+                <input type="number" id="lineWidthInput" min="1" name="lineWidthInput" class="validate" value="1">
+                <label for="lineWidthInput">px</label>
+              </div>
+              <div class="input-field inline">
+                <input type="color" id="colorShapes" name="colorShapes">
+              </div>
+              <a id="selectBtn" class="waves-effect waves-teal btn"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> Select</a>
+              <a id="penBtn" class="waves-effect waves-teal btn"><i class="material-icons">edit</i> Pen</a>
+              <a id="rectBtn" class="waves-effect waves-teal btn">&#9645; Rectangle</a>
+              <!-- <a id="triangleBtn" class="waves-effect waves-teal btn">&#9651; Triangle</a> -->
+              <a id="ellipseBtn" class="waves-effect waves-teal btn">&#9675; Ellipse</a>
+              <a id="undoBtn" class="waves-effect waves-teal btn"><i class="material-icons">undo</i> Undo</a>
+            </div>
+            <div class="card-content">
+              <span class="card-title">Make a Postcard</span>
+                <canvas id="sketchCanvas" style="border: 1px solid;"></canvas>
+            </div>
+            <div class="card-action">
+              <!-- <a href="#">Link</a>
+              <a href="#">Link</a> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./js/sketch.js" charset="utf-8"></script>
+    <script type="text/javascript">
+      document.addEventListener("DOMContentLoaded", function() {
+        var tabs = document.querySelector(".tabs");
+        var tabsInstance = M.Tabs.init(tabs, {});
+        var modal = document.querySelectorAll(".modal");
+        var modalInstance = M.Modal.init(modal, {});
+      });
+    </script>
+  </body>
+</html>
