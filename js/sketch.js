@@ -31,6 +31,14 @@ var drawRectPrev = [-1, -1], startDrawRect = 0;
 var drawEllipsePrev = [-1, -1], startDrawEllipse = 0;
 var startDrawPen = 0, currX, currY, prevX, prevY;
 
+// TOOLS
+var selectBtn = document.getElementById("selectBtn");
+var rectBtn = document.getElementById("rectBtn");
+var ellipseBtn = document.getElementById("ellipseBtn");
+var penBtn = document.getElementById("penBtn");
+var undoBtn = document.getElementById("undoBtn");
+
+var buttons = [selectBtn, rectBtn, penBtn, undoBtn, ellipseBtn];
 
 function drawRect (x, y, width, height, lineWidth=1, color=-1, add=1) {
   if (color != -1) {ctx.strokeStyle = color;}
@@ -179,13 +187,13 @@ function handleMouseDown (e) {
 
 function handleMouseMove (e) {
   e.preventDefault();
-  if (mouseDown) {redraw();}
-  else {return;}
+  if (mouseDown) {redraw();} else {return;}
   var offsetX = e.offsetX;
   var offsetY = e.offsetY;
   if ((STATE == "rectBtn" && startDrawRect) || (STATE == "ellipseBtn" && startDrawEllipse)) {
     var width = offsetX - startX;
     var height = offsetY - startY;
+    if (lineWidthInput.value >= width || lineWidthInput.value >= height) {return;}
     if (startDrawRect) {
       if (drawRectPrev[0] != -1) {
         eraseRect(drawRectPrev[0]["x"], drawRectPrev[0]["y"],
@@ -328,12 +336,14 @@ function resetStates () {
   STATE = null;
 }
 
-// TOOLS
-var selectBtn = document.getElementById("selectBtn");
-var rectBtn = document.getElementById("rectBtn");
-var triangleBtn = document.getElementById("triangleBtn");
-var penBtn = document.getElementById("penBtn");
-var undoBtn = document.getElementById("undoBtn");
+function highlightBtn (btn) {
+    for (var i = 0; i < buttons.length; i ++) {
+      if (buttons[i] != btn && buttons[i].classList.contains("red")) {
+        buttons[i].classList.remove("red");
+      }
+    }
+    btn.classList.add("red");
+}
 
 
 window.onresize = function () {resize(); redraw(); }
@@ -350,40 +360,37 @@ document.getElementById("confirmDelete").onclick = function () {
 }
 
 rectBtn.onclick = function () {
+  resetStates();
+  highlightBtn(rectBtn);
   STATE = "rectBtn";
   canvas.classList.add("crosshair");
 }
 
 ellipseBtn.onclick = function () {
+  resetStates();
+  highlightBtn(ellipseBtn);
   STATE = "ellipseBtn";
   canvas.classList.add("crosshair");
 }
 
 penBtn.onclick = function () {
+  resetStates();
+  highlightBtn(penBtn);
   STATE = "penBtn";
 }
 
 undoBtn.onclick = function () {
+  highlightBtn(undoBtn);
   undo();
   resetStates();
 }
 
-selectBtn.onclick = function () {
-  resetStates();
-}
+selectBtn.onclick = function () {highlightBtn(selectBtn); resetStates();}
 
-canvas.onmousedown = function (e) {
-  handleMouseDown(e);
-}
+canvas.onmousedown = function (e) {handleMouseDown(e);}
 
-canvas.onmouseup = function (e) {
-  endDraw(e);
-}
+canvas.onmouseup = function (e) {endDraw(e);}
 
-canvas.onmousemove = function (e) {
-  handleMouseMove(e);
-}
+canvas.onmousemove = function (e) {handleMouseMove(e);}
 
-canvas.onmouseout = function (e) {
-  endDraw(e);
-}
+canvas.onmouseout = function (e) {endDraw(e);}
