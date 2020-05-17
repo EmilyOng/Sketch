@@ -82,10 +82,10 @@ function drawPen (prevX, prevY, currX, currY, lineWidth=1, color="#000000", add=
                       "lineWidth": lineWidth});
 }
 
-function drawText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
+function drawText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000") {
   ctx.font = "20px Arial";
   if (color != "#000000") {ctx.fillStyle = color;}
-  ctx.fillText(text, startX, startY);
+  ctx.fillText(text, x, y);
 }
 
 function eraseRect (x, y, width, height, lineWidth) {
@@ -202,26 +202,26 @@ function getTargetElement (offsetX, offsetY) {
   return [-1, -1]; // no element is selected
 }
 
-function saveText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
+function saveText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000") {
   for (var i = 0; i < canvasElements.length; i ++) {
     // need a better way to do this
-    if (canvasElements[i]["type"] == "text" && canvasElements[i]["x"] == startX &&
-        canvasElements[i]["y"] == startY && parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize)
+    if (canvasElements[i]["type"] == "text" && canvasElements[i]["x"] == x &&
+        canvasElements[i]["y"] == y && parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize)
         && canvasElements[i]["fontFamily"] == fontFamily && canvasElements[i]["color"] == color) {
         canvasElements[i]["text"] = text; return;
     }
   }
-  var data = {"type": "text", "text": text, "x": startX, "y": startY,
+  var data = {"type": "text", "text": text, "x": x, "y": y,
               "fontSize": 20, "fontFamily": fontFamily, "color": color};
   canvasElements.push(data);
 }
 
-function deleteText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
-  var data = {"type": "text", "text": text, "x": startX, "y": startY,
+function deleteText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000") {
+  var data = {"type": "text", "text": text, "x": x, "y": y,
               "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "text" && canvasElements[i]["text"] == text &&
-        canvasElements[i]["x"] == startX && canvasElements[i]["y"] == startY &&
+        canvasElements[i]["x"] == x && canvasElements[i]["y"] == y &&
         parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize) && canvasElements[i]["fontFamily"] == fontFamily &&
         canvasElements[i]["color"] == color) {
         canvasElements.splice(i, 1); return;
@@ -260,12 +260,11 @@ function handleKeyPress (e) {
 function handleMouseDown (e) {
   e.preventDefault();
   mouseDown = true;
-
   var offsetX = e.offsetX; // relative to left of canvas
   var offsetY = e.offsetY; // relative to top of canvas
   //
-  console.log(offsetX, offsetY);
-  console.log(canvasElements);
+  // console.log(offsetX, offsetY);
+  // console.log(canvasElements);
   if (STATE == "rectBtn") {
     startX = offsetX; startY = offsetY;
     startDrawRect = 1;
@@ -361,13 +360,10 @@ function handleMouseMove (e) {
     return;
   }
 
-  if (target[0] == -1) {return;}
+  // MOVING OBJECTS ON CANVAS
+  if (target[0] == -1 || target[0]["type"] == "pen") {return;}
   // console.log(target);
 
-  // MOVING OBJECTS ON CANVAS
-  if (target[0]["type"] == "pen") {
-    return;
-  }
   var x = target[0]["x"], y = target[0]["y"];
 
   var dx = offsetX - startX;
@@ -387,8 +383,8 @@ function handleMouseMove (e) {
   }
   canvasElements[target[1]]["x"] = finalX;
   canvasElements[target[1]]["y"] = finalY;
-
   startX = finalX; startY = finalY;
+
   if (target[0]["type"] == "rect") {
     eraseRect(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
     // console.log(offsetX, offsetY);
@@ -401,7 +397,7 @@ function handleMouseMove (e) {
                 target[0]["lineWidth"], target[0]["color"], 0);
   }
   else if (target[0]["type"] == "text") {
-    deleteText(target[0]["text"], target[0]["x"], target[0]["y"], 20, "Arial", colorInput.value);
+    deleteText(target[0]["text"], x, y, 20, "Arial", colorInput.value);
     clearAndRedraw();
     drawText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
     saveText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
@@ -454,6 +450,7 @@ function resetStates () {
   }
   else if (STATE == "textBtn") {
     if (blinkingText) {clearInterval(blinkingText);}
+    clearAndRedraw();
     lastText = null;
     startDrawText = 0;
     startWriting = 0;
