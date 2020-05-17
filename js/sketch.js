@@ -4,7 +4,6 @@ var ctx = canvas.getContext("2d");
 var windowWidth = window.innerWidth;
 var windowHeight = window.innerWidth;
 var pixelRatio = window.devicePixelRatio; // 1 css pixel to 1 physical pixel
-ctx.lineJoin = "round";
 
 // SCALING
 function resize () {
@@ -30,6 +29,10 @@ var deleteItem = -1;
 var drawRectPrev = [-1, -1], startDrawRect = 0;
 var drawEllipsePrev = [-1, -1], startDrawEllipse = 0;
 var startDrawPen = 0, currX, currY, prevX, prevY;
+var lastText = null, startDrawText = 0, blinkingText, startWriting = 0;
+const ignoredKeys = [9, 13, 16, 17, 18, 20, 27, 37, 38, 39, 40,
+                    112, 113, 114, 115, 116, 117, 118, 119, 120,
+                    121, 122, 123, 124, 224];
 
 // TOOLS
 var selectBtn = document.getElementById("selectBtn");
@@ -37,11 +40,13 @@ var rectBtn = document.getElementById("rectBtn");
 var ellipseBtn = document.getElementById("ellipseBtn");
 var penBtn = document.getElementById("penBtn");
 var undoBtn = document.getElementById("undoBtn");
+var textBtn = document.getElementById("textBtn");
 
-var buttons = [selectBtn, rectBtn, penBtn, undoBtn, ellipseBtn];
 
-function drawRect (x, y, width, height, lineWidth=1, color=-1, add=1) {
-  if (color != -1) {ctx.strokeStyle = color;}
+var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn];
+
+function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
+  if (color != "#000000") {ctx.strokeStyle = color;}
   ctx.lineWidth = parseInt(lineWidth);
   ctx.strokeRect(x, y, width, height);
   // console.log(canvasElements);
@@ -51,9 +56,9 @@ function drawRect (x, y, width, height, lineWidth=1, color=-1, add=1) {
                       "lineWidth": lineWidth});
 }
 
-function drawEllipse (x, y, width, height, lineWidth=1, color=-1, add=1) {
+function drawEllipse (x, y, width, height, lineWidth=1, color="#000000", add=1) {
   // void ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle [, anticlockwise]);
-  if (color != -1) {ctx.strokeStyle = color;}
+  if (color != "#000000") {ctx.strokeStyle = color;}
   ctx.lineWidth = parseInt(lineWidth);
   ctx.beginPath();
   ctx.ellipse(x, y, width / 2, height / 2, 0, 0, 2 * Math.PI);
@@ -64,8 +69,8 @@ function drawEllipse (x, y, width, height, lineWidth=1, color=-1, add=1) {
                       "lineWidth": lineWidth});
 }
 
-function drawPen (prevX, prevY, currX, currY, lineWidth=1, color=-1, add=1) {
-  if (color != -1) {ctx.strokeStyle = color;}
+function drawPen (prevX, prevY, currX, currY, lineWidth=1, color="#000000", add=1) {
+  if (color != "#000000") {ctx.strokeStyle = color;}
   ctx.lineWidth = parseInt(lineWidth);
   ctx.beginPath();
   ctx.moveTo(prevX, prevY);
@@ -75,6 +80,12 @@ function drawPen (prevX, prevY, currX, currY, lineWidth=1, color=-1, add=1) {
   canvasElements.push({"type": "pen", "prevX": prevX, "prevY": prevY,
                       "currX": currX, "currY": currY, "color": color,
                       "lineWidth": lineWidth});
+}
+
+function drawText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
+  ctx.font = "20px Arial";
+  if (color != "#000000") {ctx.fillStyle = color;}
+  ctx.fillText(text, startX, startY);
 }
 
 function eraseRect (x, y, width, height, lineWidth) {
@@ -97,6 +108,27 @@ function eraseEllipse (x, y, width, height, lineWidth) {
   ctx.restore();
 }
 
+function clearAndRedraw () {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  redraw();
+}
+
+function doBlinkingText (x, y) {
+  // blinking cursor effect
+  // too expensive?
+  startDrawText = false;
+  blinkingText = setInterval(function () {
+                  if (!startDrawText) {
+                    drawText("I", x, y, 20, "Arial", colorInput.value);
+                    startDrawText = true;
+                  }
+                  else {
+                    clearAndRedraw();
+                    startDrawText = false;
+                  }
+                }, 400);
+}
+
 function redraw () {
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "rect") {
@@ -114,6 +146,10 @@ function redraw () {
               canvasElements[i]["currX"], canvasElements[i]["currY"],
               canvasElements[i]["lineWidth"], canvasElements[i]["color"], 0);
     }
+    else if (canvasElements[i]["type"] == "text") {
+      drawText(canvasElements[i]["text"], canvasElements[i]["x"], canvasElements[i]["y"],
+              canvasElements[i]["fontSize"], canvasElements[i]["fontFamily"], canvasElements[i]["color"]);
+    }
   }
 }
 
@@ -121,50 +157,115 @@ function getTargetElement (offsetX, offsetY) {
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "pen") {continue;}
     var x = canvasElements[i]["x"], y = canvasElements[i]["y"];
-    var width = canvasElements[i]["width"], height = canvasElements[i]["height"];
-    if (canvasElements[i]["type"] == "ellipse") {
-      // for ellipse, startX and startY is the center coordinate
-      // width and height will always be > 0
-      var radiusX = width / 2;
-      var radiusY = height / 2;
-    }
-    // check if element is clicked on
-    if (width < 0) {
-      if (!(offsetX <= x && offsetX >= x - Math.abs(width))) {continue;}
+    if (canvasElements[i]["type"] == "text") {
+      ctx.font = "20px Arial"; // change to canvasElements[i] properties
+      var textWidth = ctx.measureText(canvasElements[i]["text"]).width;
+      var yError = Math.abs(offsetY - y) / canvas.height * 100;
+      if (offsetX >= x && offsetX <= x + textWidth && yError <= 5) {
+        return [canvasElements[i], i];
+      }
     }
     else {
-      if (canvasElements[i]["type"] == "rect") {
-        if (!(offsetX >= x && offsetX <= x + width)) {continue;}
+      var width = canvasElements[i]["width"], height = canvasElements[i]["height"];
+      if (canvasElements[i]["type"] == "ellipse") {
+        // for ellipse, startX and startY is the center coordinate
+        // width and height will always be > 0
+        var radiusX = width / 2;
+        var radiusY = height / 2;
       }
-      else if (canvasElements[i]["type"] == "ellipse") {
-        if (!(offsetX >= x - radiusX && offsetX <= x + radiusX)) {continue;}
+      // check if element is clicked on
+      if (width < 0) {
+        if (!(offsetX <= x && offsetX >= x - Math.abs(width))) {continue;}
       }
+      else {
+        if (canvasElements[i]["type"] == "rect") {
+          if (!(offsetX >= x && offsetX <= x + width)) {continue;}
+        }
+        else if (canvasElements[i]["type"] == "ellipse") {
+          if (!(offsetX >= x - radiusX && offsetX <= x + radiusX)) {continue;}
+        }
+      }
+      if (height < 0) {
+        if (!(offsetY <= y && offsetY >= y - Math.abs(height))) {continue;}
+      }
+      else {
+        if (canvasElements[i]["type"] == "rect") {
+          if (!(offsetY >= y && offsetY <= y + height)) {continue;}
+        }
+        else if (canvasElements[i]["type"] == "ellipse") {
+          if (!(offsetY >= y - radiusY && offsetY <= y + radiusY)) {continue;}
+        }
+      }
+      return [canvasElements[i], i];
     }
-    if (height < 0) {
-      if (!(offsetY <= y && offsetY >= y - Math.abs(height))) {continue;}
-    }
-    else {
-      if (canvasElements[i]["type"] == "rect") {
-        if (!(offsetY >= y && offsetY <= y + height)) {continue;}
-      }
-      else if (canvasElements[i]["type"] == "ellipse") {
-        if (!(offsetY >= y - radiusY && offsetY <= y + radiusY)) {continue;}
-      }
-    }
-    return [canvasElements[i], i];
   }
   return [-1, -1]; // no element is selected
+}
+
+function saveText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
+  for (var i = 0; i < canvasElements.length; i ++) {
+    // need a better way to do this
+    if (canvasElements[i]["type"] == "text" && canvasElements[i]["x"] == startX &&
+        canvasElements[i]["y"] == startY && parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize)
+        && canvasElements[i]["fontFamily"] == fontFamily && canvasElements[i]["color"] == color) {
+        canvasElements[i]["text"] = text; return;
+    }
+  }
+  var data = {"type": "text", "text": text, "x": startX, "y": startY,
+              "fontSize": 20, "fontFamily": fontFamily, "color": color};
+  canvasElements.push(data);
+}
+
+function deleteText (text, startX, startY, fontSize=20, fontFamily="Arial", color="#000000") {
+  var data = {"type": "text", "text": text, "x": startX, "y": startY,
+              "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
+  for (var i = 0; i < canvasElements.length; i ++) {
+    if (canvasElements[i]["type"] == "text" && canvasElements[i]["text"] == text &&
+        canvasElements[i]["x"] == startX && canvasElements[i]["y"] == startY &&
+        parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize) && canvasElements[i]["fontFamily"] == fontFamily &&
+        canvasElements[i]["color"] == color) {
+        canvasElements.splice(i, 1); return;
+    }
+  }
+}
+
+function handleKeyPress (e) {
+  if (STATE == "textBtn" && lastText) {
+    e.preventDefault();
+    console.log(canvasElements);
+    startWriting = 1;
+    if (blinkingText) {clearInterval(blinkingText);}
+    var newKey = e.key, newText = lastText[0];
+    var updateText = false;
+    if (ignoredKeys.includes(e.keyCode)) {return;}
+    else if (newKey == "Backspace") {
+      newText = lastText[0].slice(0, lastText[0].length - 1);
+      updateText = true;
+    }
+    else {newText += newKey; updateText = true;}
+    if (updateText) {
+      clearAndRedraw();
+      // console.log(canvasElements);
+      drawText(newText, startX, startY, 20, "Arial", colorInput.value);
+      lastText[0] = newText;
+      // save text to canvasElements
+      saveText(newText, startX, startY, 20, "Arial", colorInput.value);
+      if (newText.length == 0) {deleteText("", startX, startY, 20, "Arial", colorInput.value);}
+      var textWidth = ctx.measureText(newText).width;
+      doBlinkingText(startX + textWidth, startY);
+    }
+  }
 }
 
 function handleMouseDown (e) {
   e.preventDefault();
   mouseDown = true;
-  // console.log(canvasElements);
+
   var offsetX = e.offsetX; // relative to left of canvas
   var offsetY = e.offsetY; // relative to top of canvas
   //
-  // console.log(offsetX, offsetY);
-  // console.log(canvasElements);
+  console.log(offsetX, offsetY);
+  console.log(canvasElements);
   if (STATE == "rectBtn") {
     startX = offsetX; startY = offsetY;
     startDrawRect = 1;
@@ -180,14 +281,24 @@ function handleMouseDown (e) {
     startDrawPen = 1;
     return;
   }
-  target = getTargetElement(offsetX, offsetY);
-  if (target[0] == -1) {return;}
-  startX = offsetX; startY = offsetY;
+  else if (STATE == "textBtn") {
+    if (blinkingText) {clearInterval(blinkingText);}
+    startX = offsetX; startY = offsetY;
+    lastText = ["", startX, startY];
+    doBlinkingText(startX, startY);
+  }
+  else {
+    // SELECT ELEMENTS
+    target = getTargetElement(offsetX, offsetY);
+    if (target[0] == -1) {return;}
+    startX = offsetX; startY = offsetY;
+  }
 }
 
 function handleMouseMove (e) {
   e.preventDefault();
   if (mouseDown) {redraw();} else {return;}
+  // console.log(canvasElements);
   var offsetX = e.offsetX;
   var offsetY = e.offsetY;
   if ((STATE == "rectBtn" && startDrawRect) || (STATE == "ellipseBtn" && startDrawEllipse)) {
@@ -215,6 +326,7 @@ function handleMouseMove (e) {
       drawRectPrev[0] = canvasElements[drawRectPrev[1]];
       drawRect(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
       // console.log(canvasElements);
+      return;
     }
     else if (startDrawEllipse) {
       if (width < 0 || height < 0) {return;}
@@ -238,6 +350,7 @@ function handleMouseMove (e) {
       }
       drawEllipsePrev[0] = data;
       drawEllipse(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
+      return;
     }
     // console.log(canvasElements);
   }
@@ -245,6 +358,7 @@ function handleMouseMove (e) {
     currX = offsetX; currY = offsetY;
     drawPen(prevX, prevY, currX, currY, lineWidthInput.value, colorInput.value);
     prevX = currX; prevY = currY;
+    return;
   }
 
   if (target[0] == -1) {return;}
@@ -285,6 +399,12 @@ function handleMouseMove (e) {
     eraseEllipse(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
     drawEllipse(startX, startY, target[0]["width"], target[0]["height"],
                 target[0]["lineWidth"], target[0]["color"], 0);
+  }
+  else if (target[0]["type"] == "text") {
+    deleteText(target[0]["text"], target[0]["x"], target[0]["y"], 20, "Arial", colorInput.value);
+    clearAndRedraw();
+    drawText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
+    saveText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
   }
 }
 
@@ -332,6 +452,14 @@ function resetStates () {
   else if (STATE == "penBtn") {
     startDrawPen = 0;
   }
+  else if (STATE == "textBtn") {
+    if (blinkingText) {clearInterval(blinkingText);}
+    lastText = null;
+    startDrawText = 0;
+    startWriting = 0;
+    updateText = 0;
+    target = [-1, -1];
+  }
 
   STATE = null;
 }
@@ -354,8 +482,16 @@ document.getElementById("confirmDelete").onclick = function () {
     if (deleteItem["type"] == "rect") {
       eraseRect(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
-      canvasElements.splice(target[1], 1);
     }
+    else if (deleteItem["type"] == "ellipse") {
+      eraseEllipse(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
+                deleteItem["lineWidth"]);
+    }
+    else if (deleteItem["type"] == "text") {
+      deleteText(deleteItem["text"], deleteItem["x"], deleteItem["y"]);
+      clearAndRedraw();
+    }
+    canvasElements.splice(target[1], 1);
   }
 }
 
@@ -385,8 +521,23 @@ undoBtn.onclick = function () {
   resetStates();
 }
 
-selectBtn.onclick = function () {highlightBtn(selectBtn); resetStates();}
+textBtn.onclick = function () {
+  resetStates();
+  highlightBtn(textBtn);
+  STATE = "textBtn";
+}
 
+selectBtn.onclick = function () {
+  resetStates();
+  highlightBtn(selectBtn);
+  resetStates();
+}
+
+document.onkeydown = function (e) {
+  handleKeyPress(e);
+}
+
+// CANVAS EVENTS
 canvas.onmousedown = function (e) {handleMouseDown(e);}
 
 canvas.onmouseup = function (e) {endDraw(e);}
