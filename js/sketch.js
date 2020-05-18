@@ -54,7 +54,7 @@ function colorBackground (color=bgColor.value) {
 }
 
 function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
-  if (color != "#000000") {ctx.strokeStyle = color;}
+  ctx.strokeStyle = color;
   ctx.lineWidth = parseInt(lineWidth);
   ctx.strokeRect(x, y, width, height);
   if (!add) {return;}
@@ -64,8 +64,7 @@ function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
 }
 
 function drawEllipse (x, y, width, height, lineWidth=1, color="#000000", add=1) {
-  // void ctx.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle [, anticlockwise]);
-  if (color != "#000000") {ctx.strokeStyle = color;}
+  ctx.strokeStyle = color;
   ctx.lineWidth = parseInt(lineWidth);
   ctx.beginPath();
   ctx.ellipse(x, y, width / 2, height / 2, 0, 0, 2 * Math.PI);
@@ -77,8 +76,9 @@ function drawEllipse (x, y, width, height, lineWidth=1, color="#000000", add=1) 
 }
 
 function drawPen (prevX, prevY, currX, currY, lineWidth=1, color="#000000", add=1) {
-  if (color != "#000000") {ctx.strokeStyle = color;}
+  ctx.strokeStyle = color;
   ctx.lineWidth = parseInt(lineWidth);
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(prevX, prevY);
   ctx.lineTo(currX, currY);
