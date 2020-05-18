@@ -11,7 +11,7 @@ var pixelSize = document.getElementById("pixelSize");
 var bgColor = document.getElementById("bgColor");
 
 // GLOBALS
-var STATE = null;
+var STATE = null, prevState = null;
 
 var mouseDown = false;
 var canvasElements = [];
@@ -34,9 +34,9 @@ var penBtn = document.getElementById("penBtn");
 var undoBtn = document.getElementById("undoBtn");
 var textBtn = document.getElementById("textBtn");
 var downloadBtn = document.getElementById("downloadBtn");
+var deleteBtn = document.getElementById("deleteBtn");
 
-
-var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn, downloadBtn];
+var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn, downloadBtn, deleteBtn];
 
 // SCALING
 function resize () {
@@ -464,7 +464,6 @@ function resetStates () {
     updateText = 0;
     pixelSize.setAttribute("value", "2");
   }
-
   STATE = null;
 }
 
@@ -482,7 +481,14 @@ window.onresize = function () {resize(); redraw(); }
 window.onload = function () {resize();}
 
 document.getElementById("confirmDelete").onclick = function () {
-  if (deleteItem != -1) {
+  if (STATE == "clearAll") {
+    canvasElements = [];
+    clearAndRedraw();
+    STATE = prevState;
+    resetStates();
+    prevState = null;
+  }
+  else if (deleteItem != -1) {
     if (deleteItem["type"] == "rect") {
       eraseRect(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
@@ -545,18 +551,18 @@ downloadBtn.onclick = function () {
   window.open(fullQuality);
 }
 
-var hueb = new Huebee( document.getElementById("bgColor"), {
-  notation: "hex"
-});
-
-hueb.on("change", function (color, hue, sat, lum) {
-  redraw();
-})
-
-document.onkeydown = function (e) {
-  handleKeyPress(e);
+deleteBtn.onclick = function () {
+  var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
+  modalInstance.open();
+  prevState = STATE;
+  STATE = "clearAll";
 }
 
+var hueb = new Huebee(document.getElementById("bgColor"), {notation: "hex"});
+
+hueb.on("change", function (color, hue, sat, lum) {redraw();})
+
+document.onkeydown = function (e) {handleKeyPress(e);}
 // CANVAS EVENTS
 canvas.onmousedown = function (e) {handleMouseDown(e);}
 
