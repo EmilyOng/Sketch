@@ -112,13 +112,13 @@ function clearAndRedraw () {
   redraw();
 }
 
-function doBlinkingText (x, y) {
+function doBlinkingText (x, y, fontSize=20, fontFamily="Arial", color="#000000") {
   // blinking cursor effect
   // too expensive?
   startDrawText = false;
   blinkingText = setInterval(function () {
                   if (!startDrawText) {
-                    drawText("I", x, y, 20, "Arial", colorInput.value);
+                    drawText("I", x, y, fontSize, fontFamily, color);
                     startDrawText = true;
                   }
                   else {
@@ -369,8 +369,8 @@ function handleMouseMove (e) {
     var finalY = canvasElements[target[1]]["y"] + dy;
 
     var offset = 10;
-    if (finalX + offset > canvas.width || finalX + offset< 0 ||
-        finalY + offset> canvas.height || finalY + offset< 0) {
+    if (finalX + offset > canvas.width || finalX - offset< 0 ||
+        finalY + offset> canvas.height || finalY - offset< 0) {
           // DELETING OBJECTS ON CANVAS
           var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
           modalInstance.open();
@@ -397,7 +397,8 @@ function handleMouseMove (e) {
     else if (target[0]["type"] == "text") {
       canvasElements[target[1]]["x"] = finalX;
       canvasElements[target[1]]["y"] = finalY;
-      drawText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
+      drawText(target[0]["text"], startX, startY, target[0]["fontSize"],
+              target[0]["fontFamily"], target[0]["color"]);
       clearAndRedraw();
     }
   }
