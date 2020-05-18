@@ -217,12 +217,13 @@ function saveText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000")
 }
 
 function deleteText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000") {
-  var data = {"type": "text", "text": text, "x": x, "y": y,
-              "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
+  // var data = {"type": "text", "text": text, "x": x, "y": y,
+  //             "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "text" && canvasElements[i]["text"] == text &&
         canvasElements[i]["x"] == x && canvasElements[i]["y"] == y &&
-        parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize) && canvasElements[i]["fontFamily"] == fontFamily &&
+        parseInt(canvasElements[i]["fontSize"]) == parseInt(fontSize) &&
+        canvasElements[i]["fontFamily"] == fontFamily &&
         canvasElements[i]["color"] == color) {
         canvasElements.splice(i, 1); return;
     }
@@ -232,7 +233,6 @@ function deleteText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000
 function handleKeyPress (e) {
   if (STATE == "textBtn" && lastText) {
     e.preventDefault();
-    console.log(canvasElements);
     startWriting = 1;
     if (blinkingText) {clearInterval(blinkingText);}
     var newKey = e.key, newText = lastText[0];
@@ -324,8 +324,7 @@ function handleMouseMove (e) {
       }
       drawRectPrev[0] = canvasElements[drawRectPrev[1]];
       drawRect(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
-      // console.log(canvasElements);
-      return;
+
     }
     else if (startDrawEllipse) {
       if (width < 0 || height < 0) {return;}
@@ -349,7 +348,6 @@ function handleMouseMove (e) {
       }
       drawEllipsePrev[0] = data;
       drawEllipse(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
-      return;
     }
     // console.log(canvasElements);
   }
@@ -359,48 +357,52 @@ function handleMouseMove (e) {
     prevX = currX; prevY = currY;
     return;
   }
+  else {
+    // MOVING OBJECTS ON CANVAS
+    if (target[0] == -1 || target[0]["type"] == "pen") {return;}
+    // console.log(target);
 
-  // MOVING OBJECTS ON CANVAS
-  if (target[0] == -1 || target[0]["type"] == "pen") {return;}
-  // console.log(target);
+    var x = target[0]["x"], y = target[0]["y"];
 
-  var x = target[0]["x"], y = target[0]["y"];
+    var dx = offsetX - startX;
+    var dy = offsetY - startY;
 
-  var dx = offsetX - startX;
-  var dy = offsetY - startY;
+    var finalX = canvasElements[target[1]]["x"] + dx;
+    var finalY = canvasElements[target[1]]["y"] + dy;
 
-  var finalX = canvasElements[target[1]]["x"] + dx;
-  var finalY = canvasElements[target[1]]["y"] + dy;
+    var offset = 10;
+    if (finalX + offset > canvas.width || finalX + offset< 0 ||
+        finalY + offset> canvas.height || finalY + offset< 0) {
+          // DELETING OBJECTS ON CANVAS
+          var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
+          modalInstance.open();
+          deleteItem = canvasElements[target[1]];
+          return;
+    }
 
-  var offset = 10;
-  if (finalX + offset > canvas.width || finalX + offset< 0 ||
-      finalY + offset> canvas.height || finalY + offset< 0) {
-        // DELETING OBJECTS ON CANVAS
-        var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
-        modalInstance.open();
-        deleteItem = canvasElements[target[1]];
-        return;
-  }
-  canvasElements[target[1]]["x"] = finalX;
-  canvasElements[target[1]]["y"] = finalY;
-  startX = finalX; startY = finalY;
+    startX = finalX; startY = finalY;
 
-  if (target[0]["type"] == "rect") {
-    eraseRect(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
-    // console.log(offsetX, offsetY);
-    drawRect(startX, startY, target[0]["width"], target[0]["height"],
-            target[0]["lineWidth"], target[0]["color"], 0);
-  }
-  else if (target[0]["type"] == "ellipse") {
-    eraseEllipse(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
-    drawEllipse(startX, startY, target[0]["width"], target[0]["height"],
-                target[0]["lineWidth"], target[0]["color"], 0);
-  }
-  else if (target[0]["type"] == "text") {
-    deleteText(target[0]["text"], x, y, 20, "Arial", colorInput.value);
-    clearAndRedraw();
-    drawText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
-    saveText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
+    if (target[0]["type"] == "rect") {
+      canvasElements[target[1]]["x"] = finalX;
+      canvasElements[target[1]]["y"] = finalY;
+      eraseRect(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
+      // console.log(offsetX, offsetY);
+      drawRect(startX, startY, target[0]["width"], target[0]["height"],
+              target[0]["lineWidth"], target[0]["color"], 0);
+    }
+    else if (target[0]["type"] == "ellipse") {
+      canvasElements[target[1]]["x"] = finalX;
+      canvasElements[target[1]]["y"] = finalY;
+      eraseEllipse(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
+      drawEllipse(startX, startY, target[0]["width"], target[0]["height"],
+                  target[0]["lineWidth"], target[0]["color"], 0);
+    }
+    else if (target[0]["type"] == "text") {
+      canvasElements[target[1]]["x"] = finalX;
+      canvasElements[target[1]]["y"] = finalY;
+      drawText(target[0]["text"], startX, startY, 20, "Arial", colorInput.value);
+      clearAndRedraw();
+    }
   }
 }
 
