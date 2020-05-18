@@ -424,8 +424,8 @@ function undo () {
   }
   else if (undoElem["type"] == "pen") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    redraw();
   }
+  redraw();
 }
 
 function endDraw (e) {
