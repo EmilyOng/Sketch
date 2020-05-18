@@ -7,39 +7,51 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="./css/canvas.css">
+    <link rel="stylesheet" media="screen" href="./css/huebee.css">
     <script src="./js/materialize.min.js" charset="utf-8"></script>
+    <!-- <script src="./js/jquery-3.5.1.min.js"></script> -->
+    <script src="./js/huebee.pkgd.min.js" charset="utf-8"></script>
     <title>Sketch</title>
   </head>
   <body>
     <div class="container">
       <div id="deleteItem" class="modal">
-       <div class="modal-content">
-         <h4>Delete?</h4>
-       </div>
-       <div class="modal-footer">
-         <button id="confirmDelete" class="modal-close waves-effect waves-green btn red white-text">Yes</button>
-         <button class="modal-close waves-effect waves-green btn green white-text">No</button>
-       </div>
-     </div>
+        <div class="modal-content">
+          <h4>Delete?</h4>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmDelete" class="modal-close waves-effect waves-green btn red white-text">Yes</button>
+          <button class="modal-close waves-effect waves-green btn green white-text">No</button>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col s12">
           <div class="card">
-            <div class="card-content grey lighten-4">
-              <div class="input-field inline col s1">
-                <input type="number" id="lineWidthInput" min="1" name="lineWidthInput" class="validate" value="1">
-                <label for="lineWidthInput">px</label>
+            <div class="card-stacked">
+              <div class="card-content grey lighten-4">
+                <a id="selectBtn" class="waves-effect waves-teal btn-small"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> Select</a>
+                <a id="penBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">edit</i> Pen</a>
+                <a id="rectBtn" class="waves-effect waves-teal btn-small">&#9645; Rectangle</a>
+                <a id="ellipseBtn" class="waves-effect waves-teal btn-small">&#9675; Ellipse</a>
+                <a id="textBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">text_fields</i> Text</a>
+                <a id="undoBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">undo</i> Undo</a>
+                <a id="downloadBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">vertical_align_bottom</i> Download</a>
+                <br/><br/>
+                <div class="input-field inline">
+                  px
+                  <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1">
+                </div>
+                <div class="input-field">
+                  Pen Color
+                  <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}'>
+                </div>
+                <div class="input-field">
+                  Background Color
+                  <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor">
+                </div>
               </div>
-              <div class="input-field inline">
-                <input type="color" id="colorShapes" name="colorShapes">
-              </div>
-              <a id="selectBtn" class="waves-effect waves-teal btn"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> Select</a>
-              <a id="penBtn" class="waves-effect waves-teal btn"><i class="material-icons">edit</i> Pen</a>
-              <a id="rectBtn" class="waves-effect waves-teal btn">&#9645; Rectangle</a>
-              <!-- <a id="triangleBtn" class="waves-effect waves-teal btn">&#9651; Triangle</a> -->
-              <a id="ellipseBtn" class="waves-effect waves-teal btn">&#9675; Ellipse</a>
-              <a id="textBtn" class="waves-effect waves-teal btn"><i class="material-icons">undo</i> Text</a>
-              <a id="undoBtn" class="waves-effect waves-teal btn"><i class="material-icons">undo</i> Undo</a>            </div>
+            </div>
             <div class="card-content">
               <span class="card-title">Make a Postcard</span>
                 <canvas id="sketchCanvas" style="border: 1px solid;"></canvas>

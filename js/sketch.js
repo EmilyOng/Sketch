@@ -5,20 +5,12 @@ var windowWidth = window.innerWidth;
 var windowHeight = window.innerWidth;
 var pixelRatio = window.devicePixelRatio; // 1 css pixel to 1 physical pixel
 
-// SCALING
-function resize () {
-  windowWidth = window.innerWidth;
-  windowHeight = window.innerWidth;
-  pixelRatio = window.devicePixelRatio;
-  canvas.width = canvas.parentNode.clientWidth - 100;
-  canvas.height = 600;
-}
-
+// STYLING TOOLS
 var colorInput = document.getElementById("colorShapes");
-var lineWidthInput = document.getElementById("lineWidthInput");
+var pixelSize = document.getElementById("pixelSize");
+var bgColor = document.getElementById("bgColor");
 
 // GLOBALS
-var BGCOLOR = "#FFFFFF";
 var STATE = null;
 
 var mouseDown = false;
@@ -29,7 +21,7 @@ var deleteItem = -1;
 var drawRectPrev = [-1, -1], startDrawRect = 0;
 var drawEllipsePrev = [-1, -1], startDrawEllipse = 0;
 var startDrawPen = 0, currX, currY, prevX, prevY;
-var lastText = null, startDrawText = 0, blinkingText, startWriting = 0;
+var lastText = null, startDrawText = 0, blinkingText;
 const ignoredKeys = [9, 13, 16, 17, 18, 20, 27, 37, 38, 39, 40,
                     112, 113, 114, 115, 116, 117, 118, 119, 120,
                     121, 122, 123, 124, 224];
@@ -41,9 +33,25 @@ var ellipseBtn = document.getElementById("ellipseBtn");
 var penBtn = document.getElementById("penBtn");
 var undoBtn = document.getElementById("undoBtn");
 var textBtn = document.getElementById("textBtn");
+var downloadBtn = document.getElementById("downloadBtn");
 
 
-var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn];
+var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn, downloadBtn];
+
+// SCALING
+function resize () {
+  windowWidth = window.innerWidth;
+  windowHeight = window.innerWidth;
+  pixelRatio = window.devicePixelRatio;
+  canvas.width = canvas.parentNode.clientWidth - 100;
+  canvas.height = 600;
+  colorBackground();
+}
+
+function colorBackground (color=bgColor.value) {
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
 
 function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
   if (color != "#000000") {ctx.strokeStyle = color;}
@@ -82,7 +90,7 @@ function drawPen (prevX, prevY, currX, currY, lineWidth=1, color="#000000", add=
 }
 
 function drawText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000") {
-  ctx.font = "20px Arial";
+  ctx.font = fontSize.toString() + "px " + fontFamily;
   if (color != "#000000") {ctx.fillStyle = color;}
   ctx.fillText(text, x, y);
 }
@@ -129,6 +137,7 @@ function doBlinkingText (x, y, fontSize=20, fontFamily="Arial", color="#000000")
 }
 
 function redraw () {
+  colorBackground();
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "rect") {
       drawRect(canvasElements[i]["x"], canvasElements[i]["y"],
@@ -157,7 +166,7 @@ function getTargetElement (offsetX, offsetY) {
     if (canvasElements[i]["type"] == "pen") {continue;}
     var x = canvasElements[i]["x"], y = canvasElements[i]["y"];
     if (canvasElements[i]["type"] == "text") {
-      ctx.font = "20px Arial"; // change to canvasElements[i] properties
+      ctx.font = canvasElements[i]["fontSize"].toString() + "px " + canvasElements[i]["fontFamily"];
       var textWidth = ctx.measureText(canvasElements[i]["text"]).width;
       var yError = Math.abs(offsetY - y) / canvas.height * 100;
       if (offsetX >= x && offsetX <= x + textWidth && yError <= 5) {
@@ -211,7 +220,7 @@ function saveText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000")
     }
   }
   var data = {"type": "text", "text": text, "x": x, "y": y,
-              "fontSize": 20, "fontFamily": fontFamily, "color": color};
+              "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
   canvasElements.push(data);
 }
 
@@ -232,7 +241,6 @@ function deleteText (text, x, y, fontSize=20, fontFamily="Arial", color="#000000
 function handleKeyPress (e) {
   if (STATE == "textBtn" && lastText) {
     e.preventDefault();
-    startWriting = 1;
     if (blinkingText) {clearInterval(blinkingText);}
     var newKey = e.key, newText = lastText[0];
     var updateText = false;
@@ -244,13 +252,13 @@ function handleKeyPress (e) {
     else {newText += newKey; updateText = true;}
     if (updateText) {
       clearAndRedraw();
-      drawText(newText, startX, startY, 20, "Arial", colorInput.value);
+      drawText(newText, startX, startY, pixelSize.value, "Arial", colorInput.value);
       lastText[0] = newText;
       // save text to canvasElements
-      saveText(newText, startX, startY, 20, "Arial", colorInput.value);
-      if (newText.length == 0) {deleteText("", startX, startY, 20, "Arial", colorInput.value);}
+      saveText(newText, startX, startY, pixelSize.value, "Arial", colorInput.value);
+      if (newText.length == 0) {deleteText("", startX, startY, pixelSize.value, "Arial", colorInput.value);}
       var textWidth = ctx.measureText(newText).width;
-      doBlinkingText(startX + textWidth, startY);
+      doBlinkingText(startX + textWidth, startY, pixelSize.value, "Arial", colorInput.value);
     }
   }
 }
@@ -301,7 +309,7 @@ function handleMouseMove (e) {
   if ((STATE == "rectBtn" && startDrawRect) || (STATE == "ellipseBtn" && startDrawEllipse)) {
     var width = offsetX - startX;
     var height = offsetY - startY;
-    if (lineWidthInput.value >= width || lineWidthInput.value >= height) {return;}
+    if (pixelSize.value >= width || pixelSize.value >= height) {return;}
     if (startDrawRect) {
       if (drawRectPrev[0] != -1) {
         eraseRect(drawRectPrev[0]["x"], drawRectPrev[0]["y"],
@@ -310,7 +318,7 @@ function handleMouseMove (e) {
       }
       var data = {"type": "rect", "x": startX, "y": startY,
                   "width": width, "height": height,
-                  "lineWidth": lineWidthInput.value, "color": colorInput.value};
+                  "lineWidth": pixelSize.value, "color": colorInput.value};
       if (drawRectPrev[0] != -1){
         canvasElements[drawRectPrev[1]]["width"] = width;
         canvasElements[drawRectPrev[1]]["height"] = height;
@@ -321,7 +329,7 @@ function handleMouseMove (e) {
         canvasElements.push(data);
       }
       drawRectPrev[0] = canvasElements[drawRectPrev[1]];
-      drawRect(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
+      drawRect(startX, startY, width, height, pixelSize.value, colorInput.value, 0);
 
     }
     else if (startDrawEllipse) {
@@ -334,7 +342,7 @@ function handleMouseMove (e) {
 
       var data = {"type": "ellipse", "x": startX, "y": startY,
                   "width": width, "height": height,
-                  "lineWidth": lineWidthInput.value, "color": colorInput.value};
+                  "lineWidth": pixelSize.value, "color": colorInput.value};
       if (drawEllipsePrev[0] != -1) {
         canvasElements[drawEllipsePrev[1]]["width"] = width;
         canvasElements[drawEllipsePrev[1]]["height"] = height;
@@ -345,17 +353,18 @@ function handleMouseMove (e) {
         canvasElements.push(data);
       }
       drawEllipsePrev[0] = data;
-      drawEllipse(startX, startY, width, height, lineWidthInput.value, colorInput.value, 0);
+      drawEllipse(startX, startY, width, height, pixelSize.value, colorInput.value, 0);
     }
     // console.log(canvasElements);
   }
   else if (STATE == "penBtn" && startDrawPen) {
     currX = offsetX; currY = offsetY;
-    drawPen(prevX, prevY, currX, currY, lineWidthInput.value, colorInput.value);
+    drawPen(prevX, prevY, currX, currY, pixelSize.value, colorInput.value);
     prevX = currX; prevY = currY;
     return;
   }
   else {
+    canvas.classList.add("move");
     // MOVING OBJECTS ON CANVAS
     if (target[0] == -1 || target[0]["type"] == "pen") {return;}
     // console.log(target);
@@ -414,8 +423,6 @@ function undo () {
     eraseEllipse(undoElem["x"], undoElem["y"], undoElem["width"], undoElem["height"], undoElem["lineWidth"]);
   }
   else if (undoElem["type"] == "pen") {
-    // drawPen(undoElem["currX"], undoElem["currY"], undoElem["prevX"], undoElem["prevY"],
-    //         undoElem["lineWidth"] * 2 , BGCOLOR, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     redraw();
   }
@@ -425,6 +432,7 @@ function endDraw (e) {
   e.preventDefault();
   if (deleteItem == -1) {target = [-1, -1];}
   mouseDown = false;
+  canvas.classList.remove("move");
   if (STATE == "rectBtn") {
     drawRectPrev = [-1, -1];
   }
@@ -453,8 +461,8 @@ function resetStates () {
     clearAndRedraw();
     lastText = null;
     startDrawText = 0;
-    startWriting = 0;
     updateText = 0;
+    pixelSize.setAttribute("value", "2");
   }
 
   STATE = null;
@@ -521,6 +529,7 @@ undoBtn.onclick = function () {
 
 textBtn.onclick = function () {
   resetStates();
+  pixelSize.setAttribute("value", "30");
   highlightBtn(textBtn);
   STATE = "textBtn";
 }
@@ -530,6 +539,19 @@ selectBtn.onclick = function () {
   highlightBtn(selectBtn);
   resetStates();
 }
+
+downloadBtn.onclick = function () {
+  var fullQuality = canvas.toDataURL("image/jpeg", 1.0);
+  window.open(fullQuality);
+}
+
+var hueb = new Huebee( document.getElementById("bgColor"), {
+  notation: "hex"
+});
+
+hueb.on("change", function (color, hue, sat, lum) {
+  redraw();
+})
 
 document.onkeydown = function (e) {
   handleKeyPress(e);
