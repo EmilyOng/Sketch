@@ -493,11 +493,13 @@ document.getElementById("confirmDelete").onclick = function () {
       eraseRect(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
       canvasElements.splice(target[1], 1);
+      redraw();
     }
     else if (deleteItem["type"] == "ellipse") {
       eraseEllipse(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
       canvasElements.splice(target[1], 1);
+      redraw();
     }
     else if (deleteItem["type"] == "text") {
       canvasElements.splice(target[1], 1);
