@@ -49,7 +49,6 @@ function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
   if (color != "#000000") {ctx.strokeStyle = color;}
   ctx.lineWidth = parseInt(lineWidth);
   ctx.strokeRect(x, y, width, height);
-  // console.log(canvasElements);
   if (!add) {return;}
   canvasElements.push({"type": "rect", "x": x, "y": y,
                       "width": width, "height": height, "color": color,
@@ -245,7 +244,6 @@ function handleKeyPress (e) {
     else {newText += newKey; updateText = true;}
     if (updateText) {
       clearAndRedraw();
-      // console.log(canvasElements);
       drawText(newText, startX, startY, 20, "Arial", colorInput.value);
       lastText[0] = newText;
       // save text to canvasElements
@@ -379,7 +377,6 @@ function handleMouseMove (e) {
           deleteItem = canvasElements[target[1]];
           return;
     }
-
     startX = finalX; startY = finalY;
 
     if (target[0]["type"] == "rect") {
@@ -425,7 +422,7 @@ function undo () {
 
 function endDraw (e) {
   e.preventDefault();
-  target = [-1, -1];
+  if (deleteItem == -1) {target = [-1, -1];}
   mouseDown = false;
   if (STATE == "rectBtn") {
     drawRectPrev = [-1, -1];
@@ -457,7 +454,6 @@ function resetStates () {
     startDrawText = 0;
     startWriting = 0;
     updateText = 0;
-    target = [-1, -1];
   }
 
   STATE = null;
@@ -481,16 +477,18 @@ document.getElementById("confirmDelete").onclick = function () {
     if (deleteItem["type"] == "rect") {
       eraseRect(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
+      canvasElements.splice(target[1], 1);
     }
     else if (deleteItem["type"] == "ellipse") {
       eraseEllipse(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"],
                 deleteItem["lineWidth"]);
+      canvasElements.splice(target[1], 1);
     }
     else if (deleteItem["type"] == "text") {
-      deleteText(deleteItem["text"], deleteItem["x"], deleteItem["y"]);
+      canvasElements.splice(target[1], 1);
       clearAndRedraw();
     }
-    canvasElements.splice(target[1], 1);
+    deleteItem = -1;
   }
 }
 
