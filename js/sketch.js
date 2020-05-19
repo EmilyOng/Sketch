@@ -14,7 +14,12 @@ var bgColor = document.getElementById("bgColor");
 var STATE = null, prevState = null;
 var STORAGE = "SKETCH/canvasElements";
 
+var cardContainerX = document.getElementById("cardContainer").offsetLeft;
+var cardContainerY = document.getElementById("cardContainer").offsetTop;
+
 var mouseDown = false;
+var isMobile, isTouchScreen;
+
 var canvasElements = [];
 var target = [-1];
 var startX, startY;
@@ -60,9 +65,8 @@ function load () {
 }
 
 function displayWarning () {
-  var isMobile = navigator.userAgent.match(/(iPad)|(iPhone)|(iPod)|(android)|(webOS)/i);
-  var isTouchScreen = "ontouchstart" in window;
-  if (isMobile || isTouchScreen) {M.Modal.getInstance(document.getElementById("warnScreenSize")).open();}
+  isMobile = navigator.userAgent.match(/(iPad)|(iPhone)|(iPod)|(android)|(webOS)/i);
+  if (isMobile) {M.Modal.getInstance(document.getElementById("warnScreenSize")).open();}
 }
 
 // SCALING
@@ -311,8 +315,15 @@ function handleKeyPress (e) {
 function handleMouseDown (e) {
   e.preventDefault();
   mouseDown = true;
-  var offsetX = e.offsetX; // relative to left of canvas
-  var offsetY = e.offsetY; // relative to top of canvas
+  var offsetX, offsetY;
+  if (isTouchScreen) {
+    offsetX = e.touches[0].pageX - e.target.offsetLeft - cardContainerX;
+    offsetY = e.touches[0].pageY - e.target.offsetTop - cardContainerY;
+  }
+  else {
+    offsetX = e.offsetX; // relative to left of canvas
+    offsetY = e.offsetY; // relative to top of canvas
+  }
   //
   // console.log(offsetX, offsetY);
   // console.log(canvasElements);
@@ -349,8 +360,15 @@ function handleMouseMove (e) {
   e.preventDefault();
   if (mouseDown) {redraw();} else {return;}
   // console.log(canvasElements);
-  var offsetX = e.offsetX;
-  var offsetY = e.offsetY;
+  var offsetX, offsetY;
+  if (isTouchScreen) {
+    offsetX = e.touches[0].pageX - e.target.offsetLeft - cardContainerX;
+    offsetY = e.touches[0].pageY - e.target.offsetTop - cardContainerY;
+  }
+  else {
+    offsetX = e.offsetX; // relative to left of canvas
+    offsetY = e.offsetY; // relative to top of canvas
+  }
   if ((STATE == "rectBtn" && startDrawRect) || (STATE == "ellipseBtn" && startDrawEllipse)) {
     var width = offsetX - startX;
     var height = offsetY - startY;
@@ -433,7 +451,6 @@ function handleMouseMove (e) {
           // DELETING OBJECTS ON CANVAS
           var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
           modalInstance.open();
-          deleteItem = canvasElements[target[1]];
           return;
     }
 
@@ -528,8 +545,13 @@ function highlightBtn (btn) {
 }
 
 
-window.onresize = function () {resize(); displayWarning(); redraw(); }
-window.onload = function () {resize(); load(); displayWarning(); genTip();}
+window.onresize = function () {resize(); redraw(); displayWarning();}
+window.onload = function () {
+  resize(); load(); displayWarning(); genTip();
+  isTouchScreen = "ontouchstart" in window;
+  if (isTouchScreen) {touchEvents();}
+  else{mouseEvents();}
+}
 
 document.getElementById("confirmDelete").onclick = function () {
   if (STATE == "clearAll") {
@@ -537,6 +559,7 @@ document.getElementById("confirmDelete").onclick = function () {
     clearAndRedraw();
     STATE = prevState;
     resetStates();
+    save();
     prevState = null;
   }
   else if (deleteItem != -1) {
@@ -619,10 +642,30 @@ hueb.on("change", function (color, hue, sat, lum) {redraw();})
 document.onkeydown = function (e) {handleKeyPress(e);}
 
 // CANVAS EVENTS
-canvas.onmousedown = function (e) {handleMouseDown(e);}
 
-canvas.onmouseup = function (e) {endDraw(e);}
+function touchEvents () {
+  try {
+    canvas.removeEventListener("mousedown", handleMouseDown(e));
+    canvas.removeEventListener("mousemove", handleMouseMove(e));
+    canvas.removeEventListener("mouseup", endDraw(e));
+    canvas.removeEventListener("mouseout", endDraw(e));
+  } catch (e) {}
+  canvas.ontouchstart = function (e) {handleMouseDown(e);}
+  canvas.ontouchmove = function (e) {handleMouseMove(e);}
+  canvas.ontouchcancel = function (e) {endDraw(e);}
+  canvas.ontouchend = function (e) {endDraw(e);}
+}
 
-canvas.onmousemove = function (e) {handleMouseMove(e);}
-
-canvas.onmouseout = function (e) {endDraw(e);}
+function mouseEvents () {
+  isTouchScreen = false;
+  try {
+    canvas.removeEventListener("touchstart", handleMouseDown(e));
+    canvas.removeEventListener("touchmove", handleMouseMove(e));
+    canvas.removeEventListener("touchcancel", endDraw(e));
+    canvas.removeEventListener("touchend", endDraw(e));
+  } catch (e) {}
+  canvas.onmousedown = function (e) {handleMouseDown(e);}
+  canvas.onmousemove = function (e) {handleMouseMove(e);}
+  canvas.onmouseup = function (e) {endDraw(e);}
+  canvas.onmouseout = function (e) {endDraw(e);}
+}
