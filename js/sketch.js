@@ -451,6 +451,7 @@ function handleMouseMove (e) {
           // DELETING OBJECTS ON CANVAS
           var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
           modalInstance.open();
+          deleteItem = target[0];
           return;
     }
 
