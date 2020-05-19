@@ -24,37 +24,67 @@
         </div>
       </div>
 
+      <div id="warnScreenSize" class="modal">
+        <div class="modal-content">
+          <h4>This application may not work perfectly on small screen sizes and requires a mouse.</h4>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-close waves-effect waves-green btn">Understood</button>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col s12">
           <div class="card">
             <div class="card-stacked">
               <div class="card-content grey lighten-4">
-                <a id="selectBtn" class="waves-effect waves-teal btn-small"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> Select</a>
-                <a id="penBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">edit</i> Pen</a>
-                <a id="rectBtn" class="waves-effect waves-teal btn-small">&#9645; Rectangle</a>
-                <a id="ellipseBtn" class="waves-effect waves-teal btn-small">&#9675; Ellipse</a>
-                <a id="textBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">text_fields</i> Text</a>
-                <a id="undoBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">undo</i> Undo</a>
-                <a id="downloadBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">vertical_align_bottom</i> Download</a>
-                <a id="deleteBtn" class="waves-effect waves-teal btn-small"><i class="material-icons">delete</i> Delete</a>
+                <div class="row">
+                  <div class="input-field inline col s4">
+                    px
+                    <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1">
+                  </div>
+                  <div class="input-field col s4">
+                    Pen Color
+                    <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}'>
+                  </div>
+                  <div class="input-field col s4">
+                    Background Color
+                    <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor">
+                  </div>
+                </div>
                 <br/><br/>
-                <div class="input-field inline">
-                  px
-                  <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1">
+                <div class="row">
+                  <a id="selectBtn" class="waves-effect waves-teal btn-small col s6"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> <span class="hide-on-small-only">Select</span></a>
+                  <a id="penBtn" class="waves-effect waves-teal btn-small col s6"><i class="material-icons">edit</i> <span class="hide-on-small-only">Pen</span></a>
                 </div>
-                <div class="input-field">
-                  Pen Color
-                  <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}'>
+                <div class="row">
+                  <a id="rectBtn" class="waves-effect waves-teal btn-small col s4">&#9645; <span class="hide-on-small-only">Rectangle</span></a>
+                  <a id="ellipseBtn" class="waves-effect waves-teal btn-small col s4">&#9675; <span class="hide-on-small-only">Ellipse</span></a>
+                  <a id="textBtn" class="waves-effect waves-teal btn-small col s4"><i class="material-icons">text_fields</i> <span class="hide-on-small-only">Text</span></a>
                 </div>
-                <div class="input-field">
-                  Background Color
-                  <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor">
+                <div class="row">
+                  <a id="undoBtn" class="waves-effect waves-teal btn-small col s4"><i class="material-icons">undo</i> <span class="hide-on-small-only">Undo</span></a>
+                  <a id="downloadBtn" class="waves-effect waves-teal btn-small col s4"><i class="material-icons">vertical_align_bottom</i> <span class="hide-on-small-only">Download</span></a>
+                  <a id="deleteBtn" class="waves-effect waves-teal btn-small col s4"><i class="material-icons">delete</i> <span class="hide-on-small-only">Delete</span></a>
                 </div>
               </div>
             </div>
             <div class="card-content">
               <span class="card-title">Make a Postcard</span>
                 <canvas id="sketchCanvas" style="border: 1px solid;"></canvas>
+            </div>
+            <div class="card-content">
+              <ul class="collection with-header">
+                <li class="collection-header"><h5>Tips</h5></li>
+                <li class="collection-item">
+                  <div class="row">
+                    <span id="tipText"></span>
+                    <a id="tipsBtn" class="waves-effect waves-teal btn-small right">
+                      <i class="material-icons">arrow_forward</i>
+                    </a>
+                  </div>
+                </li>
+              </ul>
             </div>
             <div class="card-action">
               <!-- <a href="#">Link</a>
@@ -65,10 +95,9 @@
       </div>
     </div>
     <script src="./js/sketch.js" charset="utf-8"></script>
+    <script src="./js/tips.js" charset="utf-8"></script>
     <script type="text/javascript">
       document.addEventListener("DOMContentLoaded", function() {
-        var tabs = document.querySelector(".tabs");
-        var tabsInstance = M.Tabs.init(tabs, {});
         var modal = document.querySelectorAll(".modal");
         var modalInstance = M.Modal.init(modal, {});
       });
