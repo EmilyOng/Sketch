@@ -322,8 +322,6 @@ function saveText (text, x, y, fontSize=30, fontFamily="Arial", color="#000000")
 }
 
 function deleteText (text, x, y, fontSize=30, fontFamily="Arial", color="#000000") {
-  // var data = {"type": "text", "text": text, "x": x, "y": y,
-  //             "fontSize": fontSize, "fontFamily": fontFamily, "color": color};
   for (var i = 0; i < canvasElements.length; i ++) {
     if (canvasElements[i]["type"] == "text" && canvasElements[i]["text"] == text &&
         canvasElements[i]["x"] == x && canvasElements[i]["y"] == y &&
@@ -543,6 +541,9 @@ function undo () {
   }
   else if (undoElem["type"] == "pen") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  else if (undoElem["type"] == "img") {
+    eraseRect(undoElem["x"], undoElem["y"], undoElem["width"], undoElem["height"]);
   }
   save();
   redraw();
