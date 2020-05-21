@@ -41,21 +41,29 @@
                 <div class="row">
                   <div class="input-field inline col s4">
                     px
-                    <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1">
+                    <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1" required>
                   </div>
                   <div class="input-field col s4">
                     Pen Color
-                    <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}'>
+                    <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}' required>
                   </div>
                   <div class="input-field col s4">
                     Background Color
-                    <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor">
+                    <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor" required>
                   </div>
                 </div>
                 <br/><br/>
                 <div class="row">
-                  <a id="selectBtn" class="waves-effect waves-teal btn-small col s6 red"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> <span class="hide-on-small-only">Select</span></a>
-                  <a id="penBtn" class="waves-effect waves-teal btn-small col s6"><i class="material-icons">edit</i> <span class="hide-on-small-only">Pen</span></a>
+                  <a id="selectBtn" class="waves-effect waves-teal btn-small col s4 red"><i class="fa fa-mouse-pointer" aria-hidden="true"></i> <span class="hide-on-small-only">Select</span></a>
+                  <a id="penBtn" class="waves-effect waves-teal btn-small col s4"><i class="material-icons">edit</i> <span class="hide-on-small-only">Pen</span></a>
+
+                  <div id="imgUploadBtn" class="waves-effect waves-teal btn-small file-field col s4">
+                    <i class="material-icons">photo</i> <span class="hide-on-small-only">Image</span>
+                    <input type="file" id="imgUpload" name="imgUpload" accept="image/*">
+                    <div class="file-path-wrapper hide">
+                      <input class="file-path validate" type="text">
+                    </div>
+                  </div>
                 </div>
                 <div class="row">
                   <a id="rectBtn" class="waves-effect waves-teal btn-small col s4">&#9645; <span class="hide-on-small-only">Rectangle</span></a>
@@ -93,14 +101,15 @@
           </div>
         </div>
       </div>
+      <div class="footer-copyright">
+        <div class="container">
+        © 2014 Copyright Text
+        <a class="grey-text text-lighten-4 right" href="#!">More Links</a>
+        </div>
+      </div>
     </div>
     <script src="./js/sketch.js" charset="utf-8"></script>
     <script src="./js/tips.js" charset="utf-8"></script>
-    <script type="text/javascript">
-      document.addEventListener("DOMContentLoaded", function() {
-        var modal = document.querySelectorAll(".modal");
-        var modalInstance = M.Modal.init(modal, {});
-      });
-    </script>
+
   </body>
 </html>

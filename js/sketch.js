@@ -12,12 +12,12 @@ var bgColor = document.getElementById("bgColor");
 
 // GLOBALS
 var STATE = null, prevState = null;
-var STORAGE = "SKETCH/canvasElements";
+const STORAGE = "SKETCH/canvasElements";
 
 var cardContainerX = document.getElementById("cardContainer").offsetLeft;
 var cardContainerY = document.getElementById("cardContainer").offsetTop;
 
-var mouseDown = false;
+var mouseDown = false, reloaded = false;
 var isMobile, isTouchScreen;
 
 var canvasElements = [];
@@ -41,8 +41,10 @@ var undoBtn = document.getElementById("undoBtn");
 var textBtn = document.getElementById("textBtn");
 var downloadBtn = document.getElementById("downloadBtn");
 var deleteBtn = document.getElementById("deleteBtn");
+var imgUploadBtn = document.getElementById("imgUploadBtn");
+var imgUpload = document.getElementById("imgUpload");
 
-var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn, downloadBtn, deleteBtn];
+var buttons = [selectBtn, rectBtn, ellipseBtn, penBtn, undoBtn, textBtn, downloadBtn, deleteBtn, imgUploadBtn];
 
 // Custom comparator
 function comp (a, b) {return a.error - b.error;}
@@ -126,7 +128,41 @@ function drawText (text, x, y, fontSize=30, fontFamily="Arial", color="#000000")
   ctx.fillText(text, x, y);
 }
 
-function eraseRect (x, y, width, height, lineWidth) {
+function drawImg (dataURL, x, y, width=0, height=0, isUrl=0, index=-1, add=1) {
+  if (isUrl) {
+    var img = new Image;
+    img.src = dataURL;
+    img.onload = function () {
+      var imgWidth = img.width, imgHeight = img.height;
+
+      var imgScales = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+      var lastScale = -1, testWidth = imgWidth, testHeight = imgHeight;
+      while (testWidth > canvas.width * 0.8 || testHeight > canvas.height * 0.8) {
+        testWidth = imgWidth; testHeight = imgHeight;
+        if (imgScales.length == 0) {lastScale *= 0.1;}
+        else {lastScale = imgScales.pop();}
+        testWidth *= lastScale;
+        testHeight *= lastScale;
+      }
+      imgWidth = testWidth; imgHeight = testHeight;
+      ctx.drawImage(img, x, y, imgWidth, imgHeight);
+      if (index != -1) {canvasElements[index]["img"] = img;} // update image element
+      if (!add){return;}
+      canvasElements.push({"type": "img", "img": img, "dataURL": dataURL, "x": x, "y": y,
+                          "width": imgWidth, "height": imgHeight});
+    }
+  }
+  else {
+    var img = dataURL;
+    ctx.drawImage(img, x, y, width, height);
+    if (index != -1) {canvasElements[index]["img"] = img;} // update image element
+    if (!add){return;}
+    canvasElements.push({"type": "img", "img": img, "dataURL": img.src, "x": x, "y": y,
+                        "width": imgWidth, "height": imgHeight});
+  }
+}
+
+function eraseRect (x, y, width, height, lineWidth=1) {
   // check sign change
   lineWidth = parseInt(lineWidth);
   var prevX = width < 0 ? x + lineWidth : x - lineWidth;
@@ -189,7 +225,18 @@ function redraw () {
       drawText(canvasElements[i]["text"], canvasElements[i]["x"], canvasElements[i]["y"],
               canvasElements[i]["fontSize"], canvasElements[i]["fontFamily"], canvasElements[i]["color"]);
     }
+    else if (canvasElements[i]["type"] == "img") {
+      if (reloaded) {
+        drawImg(canvasElements[i]["dataURL"], canvasElements[i]["x"], canvasElements[i]["y"],
+                canvasElements[i]["width"], canvasElements[i]["height"], 1, i, 0);
+      }
+      else {
+        drawImg(canvasElements[i]["img"], canvasElements[i]["x"], canvasElements[i]["y"],
+                canvasElements[i]["width"], canvasElements[i]["height"], 0, i, 0);
+      }
+    }
   }
+  reloaded = false;
 }
 
 function getTargetElement (offsetX, offsetY) {
@@ -222,10 +269,11 @@ function getTargetElement (offsetX, offsetY) {
       }
       // check if element is clicked on
       if (width < 0) {
+        // only rect
         if (!(offsetX <= x && offsetX >= x - Math.abs(width))) {continue;}
       }
       else {
-        if (canvasElements[i]["type"] == "rect") {
+        if (canvasElements[i]["type"] == "rect" || canvasElements[i]["type"] == "img") {
           if (!(offsetX >= x && offsetX <= x + width)) {continue;}
         }
         else if (canvasElements[i]["type"] == "ellipse") {
@@ -233,10 +281,11 @@ function getTargetElement (offsetX, offsetY) {
         }
       }
       if (height < 0) {
+        // only rect
         if (!(offsetY <= y && offsetY >= y - Math.abs(height))) {continue;}
       }
       else {
-        if (canvasElements[i]["type"] == "rect") {
+        if (canvasElements[i]["type"] == "rect" || canvasElements[i]["type"] == "img") {
           if (!(offsetY >= y && offsetY <= y + height)) {continue;}
         }
         else if (canvasElements[i]["type"] == "ellipse") {
@@ -324,9 +373,6 @@ function handleMouseDown (e) {
     offsetX = e.offsetX; // relative to left of canvas
     offsetY = e.offsetY; // relative to top of canvas
   }
-  //
-  // console.log(offsetX, offsetY);
-  // console.log(canvasElements);
   if (STATE == "rectBtn") {
     startX = offsetX; startY = offsetY;
     startDrawRect = 1;
@@ -349,6 +395,7 @@ function handleMouseDown (e) {
     doBlinkingText(startX, startY, pixelSize.value, "Arial", colorInput.value);
   }
   else {
+    if (STATE == "imgUploadBtn") {resetStates(); highlightBtn(selectBtn);}
     // SELECT ELEMENTS
     target = getTargetElement(offsetX, offsetY);
     if (target[0] == -1) {return;}
@@ -359,7 +406,6 @@ function handleMouseDown (e) {
 function handleMouseMove (e) {
   e.preventDefault();
   if (mouseDown) {redraw();} else {return;}
-  // console.log(canvasElements);
   var offsetX, offsetY;
   if (isTouchScreen) {
     offsetX = e.touches[0].pageX - e.target.offsetLeft - cardContainerX;
@@ -437,7 +483,7 @@ function handleMouseMove (e) {
     limX = -target[0]["width"] / 2;
     limY = -target[0]["height"] / 2;
 
-    if (target[0]["type"] == "rect" || target[0]["type"] == "text") {
+    if (target[0]["type"] == "rect" || target[0]["type"] == "text" || target[0]["type"] == "img") {
       boundX = startX + target[0]["width"];
       boundY = startY + target[0]["height"];
     }
@@ -461,6 +507,12 @@ function handleMouseMove (e) {
       eraseRect(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
       drawRect(startX, startY, target[0]["width"], target[0]["height"],
               target[0]["lineWidth"], target[0]["color"], 0);
+    }
+    else if (target[0]["type"] == "img") {
+      canvasElements[target[1]]["x"] = startX;
+      canvasElements[target[1]]["y"] = startY;
+      eraseRect(x, y, target[0]["width"], target[0]["height"]);
+      drawImg(target[0]["img"], startX, startY, target[0]["width"], target[0]["height"], 0, -1, 0);
     }
     else if (target[0]["type"] == "ellipse") {
       canvasElements[target[1]]["x"] = startX;
@@ -548,6 +600,9 @@ function highlightBtn (btn) {
 
 window.onresize = function () {resize(); redraw(); displayWarning();}
 window.onload = function () {
+  reloaded = true;
+  var modal = document.querySelectorAll(".modal");
+  var modalInstance = M.Modal.init(modal, {});
   resize(); load(); displayWarning(); genTip();
   isTouchScreen = "ontouchstart" in window;
   if (isTouchScreen) {touchEvents();}
@@ -579,6 +634,11 @@ document.getElementById("confirmDelete").onclick = function () {
     else if (deleteItem["type"] == "text") {
       canvasElements.splice(target[1], 1);
       clearAndRedraw();
+    }
+    else if (deleteItem["type"] == "img") {
+      eraseRect(deleteItem["x"], deleteItem["y"], deleteItem["width"], deleteItem["height"]);
+      canvasElements.splice(target[1], 1);
+      redraw();
     }
     deleteItem = -1;
     save();
@@ -625,15 +685,35 @@ selectBtn.onclick = function () {
 }
 
 downloadBtn.onclick = function () {
+  highlightBtn(downloadBtn);
   var fullQuality = canvas.toDataURL("image/jpeg", 1.0);
   window.open(fullQuality);
 }
 
 deleteBtn.onclick = function () {
+  highlightBtn(deleteBtn);
   var modalInstance = M.Modal.getInstance(document.getElementById("deleteItem"));
   modalInstance.open();
   prevState = STATE;
   STATE = "clearAll";
+}
+
+imgUploadBtn.onclick = function () {
+  resetStates();
+  STATE = "imgUploadBtn";
+  highlightBtn(imgUploadBtn);
+}
+
+imgUpload.onchange = function () {
+  var file = imgUpload.files[0];
+  var reader = new FileReader();
+  if (file) {
+    reader.readAsDataURL(file);
+  }
+  reader.onloadend = function () {
+    var dataURL = reader.result;
+    drawImg(dataURL, 5, 5, 0, 0, 1, -1, 1);
+  }
 }
 
 var hueb = new Huebee(document.getElementById("bgColor"), {notation: "hex"});
