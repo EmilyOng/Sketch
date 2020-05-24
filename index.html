@@ -24,6 +24,27 @@
         </div>
       </div>
 
+      <div id="resizeImage" class="modal">
+        <div class="modal-content">
+          <h4>Resize Image</h4>
+          <div class="row">
+            <div class="input-field">
+              Image Width
+              <input type="number" id="setImgWidth" min="1" name="setImgWidth" class="validate" value="1" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field">
+              Image Height
+              <input type="number" id="setImgHeight" min="1" name="setImgHeight" class="validate" value="1" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmResize" class="modal-close waves-effect waves-green btn red white-text">Ok</button>
+        </div>
+      </div>
+
       <div id="warnScreenSize" class="modal">
         <div class="modal-content">
           <h4>This application may not work perfectly on small screen sizes.</h4>
@@ -44,11 +65,11 @@
                     <input type="number" id="pixelSize" min="1" name="pixelSize" class="validate" value="1" required>
                   </div>
                   <div class="input-field col s4">
-                    Pen Color
+                    Pen
                     <input class="color-input" value="#000000" name="colorShapes" id="colorShapes" data-huebee='{"notation": "hex"}' required>
                   </div>
                   <div class="input-field col s4">
-                    Background Color
+                    Background
                     <input class="color-input" value="#FFFFFF" type="text" name="bgColor" id="bgColor" required>
                   </div>
                 </div>
@@ -78,7 +99,6 @@
               </div>
             </div>
             <div class="card-content">
-              <span class="card-title">Make a Postcard</span>
                 <canvas id="sketchCanvas" style="border: 1px solid;"></canvas>
             </div>
             <div class="card-content">

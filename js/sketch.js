@@ -17,10 +17,11 @@ const STORAGE = "SKETCH/canvasElements";
 var cardContainerX = document.getElementById("cardContainer").offsetLeft;
 var cardContainerY = document.getElementById("cardContainer").offsetTop;
 
-var mouseDown = false, reloaded = false;
+var mouseDown = false, reloaded = false, askToResizeImage = false;
 var isMobile, isTouchScreen;
 
 var canvasElements = [];
+
 var target = [-1];
 var startX, startY;
 var deleteItem = -1;
@@ -87,9 +88,9 @@ function colorBackground (color=bgColor.value) {
 }
 
 function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
-  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
   ctx.lineWidth = parseInt(lineWidth);
-  ctx.strokeRect(x, y, width, height);
+  ctx.fillRect(x, y, width, height);
   if (!add) {return;}
   canvasElements.push({"type": "rect", "x": x, "y": y,
                       "width": width, "height": height, "color": color,
@@ -97,11 +98,11 @@ function drawRect (x, y, width, height, lineWidth=1, color="#000000", add=1) {
 }
 
 function drawEllipse (x, y, width, height, lineWidth=1, color="#000000", add=1) {
-  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
   ctx.lineWidth = parseInt(lineWidth);
   ctx.beginPath();
   ctx.ellipse(x, y, width / 2, height / 2, 0, 0, 2 * Math.PI);
-  ctx.stroke();
+  ctx.fill();
   if (!add) {return;}
   canvasElements.push({"type": "ellipse", "x": x, "y": y,
                       "width": width, "height": height, "color": color,
@@ -133,23 +134,39 @@ function drawImg (dataURL, x, y, width=0, height=0, isUrl=0, index=-1, add=1) {
     var img = new Image;
     img.src = dataURL;
     img.onload = function () {
-      var imgWidth = img.width, imgHeight = img.height;
-
-      var imgScales = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
-      var lastScale = -1, testWidth = imgWidth, testHeight = imgHeight;
-      while (testWidth > canvas.width * 0.8 || testHeight > canvas.height * 0.8) {
-        testWidth = imgWidth; testHeight = imgHeight;
-        if (imgScales.length == 0) {lastScale *= 0.1;}
-        else {lastScale = imgScales.pop();}
-        testWidth *= lastScale;
-        testHeight *= lastScale;
+      if (askToResizeImage) {
+        document.getElementById("setImgWidth").value = img.width;
+        document.getElementById("setImgHeight").value = img.height;
+        var modalInstance = M.Modal.getInstance(document.getElementById("resizeImage"));
+        modalInstance.open();
       }
-      imgWidth = testWidth; imgHeight = testHeight;
-      ctx.drawImage(img, x, y, imgWidth, imgHeight);
-      if (index != -1) {canvasElements[index]["img"] = img;} // update image element
-      if (!add){return;}
-      canvasElements.push({"type": "img", "img": img, "dataURL": dataURL, "x": x, "y": y,
-                          "width": imgWidth, "height": imgHeight});
+      function setImage () {
+        var imgWidth = document.getElementById("setImgWidth").value;
+        var imgHeight = document.getElementById("setImgHeight").value;
+
+        var imgScales = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+        var lastScale = -1, testWidth = imgWidth, testHeight = imgHeight;
+        while (testWidth > canvas.width * 0.8 || testHeight > canvas.height * 0.8) {
+          testWidth = imgWidth; testHeight = imgHeight;
+          if (imgScales.length == 0) {lastScale *= 0.1;}
+          else {lastScale = imgScales.pop();}
+          testWidth *= lastScale;
+          testHeight *= lastScale;
+        }
+        imgWidth = testWidth; imgHeight = testHeight;
+        ctx.drawImage(img, x, y, imgWidth, imgHeight);
+        if (index != -1) {canvasElements[index]["img"] = img;} // update image element
+        if (!add){return;}
+        canvasElements.push({"type": "img", "img": img, "dataURL": dataURL, "x": x, "y": y,
+                            "width": imgWidth, "height": imgHeight});
+      }
+      if (!askToResizeImage) {setImage();}
+      else {
+        document.getElementById("confirmResize").onclick = function () {
+          askToResizeImage = false;
+          setImage();
+        }
+      }
     }
   }
   else {
@@ -500,28 +517,28 @@ function handleMouseMove (e) {
     }
 
     if (target[0]["type"] == "rect") {
-      canvasElements[target[1]]["x"] = startX;
-      canvasElements[target[1]]["y"] = startY;
+      canvasElements[target[1]]["x"] = startX < 0 ? 0 : startX;
+      canvasElements[target[1]]["y"] = startY < 0 ? 0 : startY;
       eraseRect(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
       drawRect(startX, startY, target[0]["width"], target[0]["height"],
               target[0]["lineWidth"], target[0]["color"], 0);
     }
     else if (target[0]["type"] == "img") {
-      canvasElements[target[1]]["x"] = startX;
-      canvasElements[target[1]]["y"] = startY;
+      canvasElements[target[1]]["x"] = startX < 0 ? 0 : startX;
+      canvasElements[target[1]]["y"] = startY < 0 ? 0 : startY;
       eraseRect(x, y, target[0]["width"], target[0]["height"]);
       drawImg(target[0]["img"], startX, startY, target[0]["width"], target[0]["height"], 0, -1, 0);
     }
     else if (target[0]["type"] == "ellipse") {
-      canvasElements[target[1]]["x"] = startX;
-      canvasElements[target[1]]["y"] = startY;
+      canvasElements[target[1]]["x"] = startX < 0 ? 0 : startX;
+      canvasElements[target[1]]["y"] = startY < 0 ? 0 : startY;
       eraseEllipse(x, y, target[0]["width"], target[0]["height"], target[0]["lineWidth"]);
       drawEllipse(startX, startY, target[0]["width"], target[0]["height"],
                   target[0]["lineWidth"], target[0]["color"], 0);
     }
     else if (target[0]["type"] == "text") {
-      canvasElements[target[1]]["x"] = startX;
-      canvasElements[target[1]]["y"] = startY;
+      canvasElements[target[1]]["x"] = startX < 0 ? 0 : startX;
+      canvasElements[target[1]]["y"] = startY < 0 ? 0 : startY;
       drawText(target[0]["text"], startX, startY, target[0]["fontSize"],
               target[0]["fontFamily"], target[0]["color"]);
       clearAndRedraw();
@@ -713,6 +730,7 @@ imgUpload.onchange = function () {
   }
   reader.onloadend = function () {
     var dataURL = reader.result;
+    askToResizeImage = true;
     drawImg(dataURL, 5, 5, 0, 0, 1, -1, 1);
   }
 }

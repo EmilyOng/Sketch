@@ -1,2 +1,2 @@
-.crosshair {cursor: crosshair;}
-.move {cursor: move;}
+.crosshair {cursor: url("crosshair.cur"), auto;}
+.move {cursor: url("move.cur"), auto;}
