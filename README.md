@@ -11,12 +11,15 @@ Any sketch is automatically saved to the local storage and is safe from reloads.
 - Materialize: Responsive front-end library
 
 ## Platforms
+
 ![smallScreen](docs/img/smallScreen.png)
+
 It would be slightly harder to draw using a small screen. A warning would be displayed when the user runs the webpage on a phone.
 
 Despite so, the program handles touch support as well, so you can draw on your screen.
 
 ![smallScreenLayout](docs/img/smallScreenLayout.png)
+
 Text is hidden on small screens, displaying only obvious icons.
 
 ## Tools
