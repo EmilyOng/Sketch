@@ -616,12 +616,12 @@ function highlightBtn (btn) {
 }
 
 
-window.onresize = function () {resize(); redraw(); displayWarning();}
+window.onresize = function () {resize(); redraw(); displayWarning()}
 window.onload = function () {
   reloaded = true;
   var modal = document.querySelectorAll(".modal");
   var modalInstance = M.Modal.init(modal, {});
-  resize(); load(); displayWarning(); genTip();
+  resize(); load(); genTip();
   isTouchScreen = "ontouchstart" in window;
   if (isTouchScreen) {touchEvents();}
   else{mouseEvents();}
